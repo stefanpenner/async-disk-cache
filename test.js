@@ -26,9 +26,9 @@ describe('cache', function() {
 
   it('set', function() {
     return cache.set(key, value).then(function(filePath) {
+      // credit @jgable
       var stats = fs.statSync(filePath);
       var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
-
       should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
 
       should(fs.readFileSync(filePath).toString()).equal(value);
