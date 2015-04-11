@@ -2,7 +2,7 @@
 
 var path = require('path');
 var Cache = require('./');
-var fs = require('graceful-fs');
+var fs = require('fs');
 var should = require('should');
 
 describe('cache', function() {
