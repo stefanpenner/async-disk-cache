@@ -1,0 +1,21 @@
+shallow_clone: true
+
+version: '{build}'
+
+environment:
+  matrix:
+    - nodejs_version: '1.6'
+    - nodejs_version: '0.12'
+
+install:
+  - ps: Install-Product node $env:nodejs_version
+  - npm install
+
+build: off
+
+test_script:
+  - ps: 'npm run test:dot #PowerShell'
+  - cmd: npm run test:dot
+
+cache:
+  - node_modules
