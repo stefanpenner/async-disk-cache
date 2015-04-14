@@ -59,7 +59,7 @@ function handleENOENT(reason) {
  *                          cache. If omitted the system tmpdir is used
  */
 function Cache(key, location) {
-  this.tmpDir =  location|| tmpDir;
+  this.tmpDir = location || tmpDir;
   this.key = key || 'default-disk-cache';
   this.root = path.join(this.tmpDir, this.key);
 
