@@ -4,6 +4,7 @@ var path = require('path');
 var Cache = require('./');
 var fs = require('fs');
 var should = require('should');
+var RSVP = require('rsvp');
 
 describe('cache', function() {
   var cache;
@@ -76,6 +77,114 @@ describe('cache', function() {
           });
         });
       });
+    });
+  });
+});
+
+var zlib = require('zlib');
+var inflate = RSVP.denodeify(zlib.inflate);
+var gunzip = RSVP.denodeify(zlib.gunzip);
+var inflateRaw = RSVP.denodeify(zlib.inflateRaw);
+
+describe('cache compress: [ deflate ]', function() {
+  var cache;
+  var key = 'path/to/file.js';
+  var value = 'Some test value';
+
+  beforeEach(function() {
+    cache = new Cache('my-testing-cache', {
+      compression: 'deflate'
+    });
+  });
+
+  afterEach(function() {
+    return cache.clear();
+  });
+
+  it('set', function() {
+    return cache.set(key, value).then(function(filePath) {
+      var stats = fs.statSync(filePath);
+      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+
+      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+      return inflate(fs.readFileSync(filePath)).then(function(result){
+        var result = result.toString();
+        should(result).equal(value);
+
+        return cache.get(key).then(function(detail) {
+          should(detail.value).equal(value);
+        });
+      });
+    });
+  });
+});
+
+describe('cache compress: [ gzip ]', function() {
+  var cache;
+  var key = 'path/to/file.js';
+  var value = 'Some test value';
+
+  beforeEach(function() {
+    cache = new Cache('my-testing-cache', {
+      compression: 'gzip'
+    });
+  });
+
+  afterEach(function() {
+    return cache.clear();
+  });
+
+  it('set', function() {
+    return cache.set(key, value).then(function(filePath){
+      var stats = fs.statSync(filePath);
+      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+
+      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+
+      return gunzip(fs.readFileSync(filePath)).then(function(result){
+        var result = result.toString();
+
+        should(result).equal(value);
+
+        return cache.get(key).then(function(detail){
+          should(detail.value).equal(value);
+        });
+      });
+    })
+  });
+});
+
+describe('cache compress: [ deflateRaw ]', function() {
+  var cache;
+  var key = 'path/to/file.js';
+  var value = 'Some test value';
+
+  beforeEach(function() {
+    cache = new Cache('my-testing-cache', {
+      compression: 'deflateRaw'
+    });
+  });
+
+  afterEach(function() {
+    return cache.clear();
+  });
+
+  it('set', function() {
+    return cache.set(key, value).then(function(filePath) {
+      var stats = fs.statSync(filePath);
+      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+
+      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+
+      return inflateRaw(fs.readFileSync(filePath)).then(function(result){
+        var result = result.toString();
+        should(result).equal(value);
+
+        return cache.get(key).then(function(detail) {
+          should(detail.value).equal(value);
+        });
+      });
+
     });
   });
 });

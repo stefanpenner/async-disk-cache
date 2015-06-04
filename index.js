@@ -11,22 +11,24 @@ var unlink = RSVP.denodeify(fs.unlink);
 var chmod = RSVP.denodeify(fs.chmod);
 var tmpDir = require('os').tmpDir();
 var debug = require('debug')('async-disk-cache');
+var zlib = require('zlib');
 
 var mode = {
   mode: parseInt('0777', 8)
 };
 
 var CacheEntry = require('./lib/cache-entry');
-
 /*
  * @private
  * @method processFile
  * @param String filePath the path of the cached file
  * @returns CacheEntry an object representing that cache entry
  */
-function processFile(filePath) {
+function processFile(decompress, filePath) {
   return function(fileStream) {
-    return new CacheEntry(true, filePath, fileStream.toString());
+    return decompress(fileStream).then(function(value){
+      return new CacheEntry(true, filePath, '' + value);
+    });
   };
 }
 
@@ -51,19 +53,37 @@ function handleENOENT(reason) {
   throw reason;
 }
 
+var COMPRESSIONS = {
+  deflate: {
+    in: RSVP.denodeify(zlib.deflate),
+    out: RSVP.denodeify(zlib.inflate)
+  },
+
+  deflateRaw: {
+    in: RSVP.denodeify(zlib.deflateRaw),
+    out: RSVP.denodeify(zlib.inflateRaw)
+  },
+
+  gzip: {
+    in: RSVP.denodeify(zlib.gzip),
+    out: RSVP.denodeify(zlib.gunzip)
+  },
+};
 /*
  *
  * @class Cache
  * @param {String} key the global key that represents this cache in its final location
- * @param {String} location an optional string path to the location for the
+ * @param {String} options optional string path to the location for the
  *                          cache. If omitted the system tmpdir is used
  */
-function Cache(key, location) {
-  this.tmpDir = location || tmpDir;
+function Cache(key, _) {
+  var options = _ || {};
+  this.tmpDir = options.location|| tmpDir;
+  this.compression = options.compression;
   this.key = key || 'default-disk-cache';
   this.root = path.join(this.tmpDir, this.key);
 
-  debug('new Cache { root: %s }', this.root);
+  debug('new Cache { root: %s, compression: %s }', this.root, this.compression);
 }
 
 /*
@@ -111,7 +131,7 @@ Cache.prototype.get = function(key) {
   debug('get: %s', filePath);
 
   return readFile(filePath).
-    then(processFile(filePath), handleENOENT);
+    then(processFile(this.decompress.bind(this), filePath), handleENOENT);
 };
 
 /*
@@ -126,14 +146,19 @@ Cache.prototype.get = function(key) {
 Cache.prototype.set = function(key, value) {
   var filePath = this.pathFor(key);
   debug('set : %s', filePath);
+  var cache = this;
 
   return mkdirp(path.dirname(filePath), mode).then(function() {
-    return writeFile(filePath, value, mode).then(function() {
-      return chmod(filePath, mode.mode).then(function() {
-        return filePath;
+    return cache.compress(value).then(function(value) {
+      return writeFile(filePath, value, mode).then(function() {
+        return chmod(filePath, mode.mode).then(function() {
+          return filePath;
+        });
       });
     });
   });
+
+  return filePath;
 };
 
 /*
@@ -157,11 +182,33 @@ Cache.prototype.remove = function(key) {
  * @method pathFor
  * @param {String} key the key to generate the final path for
  * @returns the path where the key's value may reside
- *
- *
  */
 Cache.prototype.pathFor = function(key) {
   return path.join(this.root, key);
+};
+
+/*
+ * @public
+ *
+ * @method decompress
+ * @param {String} compressedValue
+ * @returns decompressedValue
+ */
+Cache.prototype.decompress = function(value) {
+  if (!this.compression) { return RSVP.Promise.resolve(value); }
+  return COMPRESSIONS[this.compression].out(value);
+};
+
+/*
+ * @public
+ *
+ * @method compress
+ * @param {String} value
+ * @returns compressedValue
+ */
+Cache.prototype.compress = function(value) {
+  if (!this.compression) { return RSVP.Promise.resolve(value); }
+  return COMPRESSIONS[this.compression].in(value);
 };
 
 module.exports = Cache;
