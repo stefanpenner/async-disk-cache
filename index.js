@@ -195,7 +195,7 @@ Cache.prototype.pathFor = function(key) {
  * @returns decompressedValue
  */
 Cache.prototype.decompress = function(value) {
-  if (!this.compression) { return Promise.resolve(value); }
+  if (!this.compression) { return RSVP.Promise.resolve(value); }
   return COMPRESSIONS[this.compression].out(value);
 };
 
@@ -207,7 +207,7 @@ Cache.prototype.decompress = function(value) {
  * @returns compressedValue
  */
 Cache.prototype.compress = function(value) {
-  if (!this.compression) { return Promise.resolve(value); }
+  if (!this.compression) { return RSVP.Promise.resolve(value); }
   return COMPRESSIONS[this.compression].in(value);
 };
 

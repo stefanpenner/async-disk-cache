@@ -4,6 +4,7 @@ var path = require('path');
 var Cache = require('./');
 var fs = require('fs');
 var should = require('should');
+var RSVP = require('rsvp');
 
 describe('cache', function() {
   var cache;
@@ -81,6 +82,9 @@ describe('cache', function() {
 });
 
 var zlib = require('zlib');
+var inflate = RSVP.denodeify(zlib.inflate);
+var gunzip = RSVP.denodeify(zlib.gunzip);
+var inflateRaw = RSVP.denodeify(zlib.inflateRaw);
 
 describe('cache compress: [ deflate ]', function() {
   var cache;
@@ -103,11 +107,13 @@ describe('cache compress: [ deflate ]', function() {
       var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
 
       should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+      return inflate(fs.readFileSync(filePath)).then(function(result){
+        var result = result.toString();
+        should(result).equal(value);
 
-      should(zlib.inflateSync(fs.readFileSync(filePath)).toString()).equal(value);
-
-      return cache.get(key).then(function(detail){
-        should(detail.value).equal(value);
+        return cache.get(key).then(function(detail) {
+          should(detail.value).equal(value);
+        });
       });
     });
   });
@@ -135,10 +141,14 @@ describe('cache compress: [ gzip ]', function() {
 
       should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
 
-      should(zlib.gunzipSync(fs.readFileSync(filePath)).toString()).equal(value);
+      return gunzip(fs.readFileSync(filePath)).then(function(result){
+        var result = result.toString();
 
-      return cache.get(key).then(function(detail){
-        should(detail.value).equal(value);
+        should(result).equal(value);
+
+        return cache.get(key).then(function(detail){
+          should(detail.value).equal(value);
+        });
       });
     })
   });
@@ -166,11 +176,15 @@ describe('cache compress: [ deflateRaw ]', function() {
 
       should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
 
-      should(zlib.inflateRawSync(fs.readFileSync(filePath)).toString()).equal(value);
+      return inflateRaw(fs.readFileSync(filePath)).then(function(result){
+        var result = result.toString();
+        should(result).equal(value);
 
-      return cache.get(key).then(function(detail) {
-        should(detail.value).equal(value);
+        return cache.get(key).then(function(detail) {
+          should(detail.value).equal(value);
+        });
       });
+
     });
   });
 });
