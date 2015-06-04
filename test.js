@@ -79,3 +79,98 @@ describe('cache', function() {
     });
   });
 });
+
+var zlib = require('zlib');
+
+describe('cache compress: [ deflate ]', function() {
+  var cache;
+  var key = 'path/to/file.js';
+  var value = 'Some test value';
+
+  beforeEach(function() {
+    cache = new Cache('my-testing-cache', {
+      compression: 'deflate'
+    });
+  });
+
+  afterEach(function() {
+    cache.clear();
+  });
+
+  it('set', function() {
+    return cache.set(key, value).then(function(filePath) {
+      var stats = fs.statSync(filePath);
+      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+
+      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+
+      should(zlib.inflateSync(fs.readFileSync(filePath)).toString()).equal(value);
+
+      return cache.get(key).then(function(detail){
+        should(detail.value).equal(value);
+      });
+    });
+  });
+});
+
+describe('cache compress: [ gzip ]', function() {
+  var cache;
+  var key = 'path/to/file.js';
+  var value = 'Some test value';
+
+  beforeEach(function() {
+    cache = new Cache('my-testing-cache', {
+      compression: 'gzip'
+    });
+  });
+
+  afterEach(function() {
+    return cache.clear();
+  });
+
+  it('set', function() {
+    return cache.set(key, value).then(function(filePath){
+      var stats = fs.statSync(filePath);
+      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+
+      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+
+      should(zlib.gunzipSync(fs.readFileSync(filePath)).toString()).equal(value);
+
+      return cache.get(key).then(function(detail){
+        should(detail.value).equal(value);
+      });
+    })
+  });
+});
+
+describe('cache compress: [ deflateRaw ]', function() {
+  var cache;
+  var key = 'path/to/file.js';
+  var value = 'Some test value';
+
+  beforeEach(function() {
+    cache = new Cache('my-testing-cache', {
+      compression: 'deflateRaw'
+    });
+  });
+
+  afterEach(function() {
+    return cache.clear();
+  });
+
+  it('set', function() {
+    return cache.set(key, value).then(function(filePath) {
+      var stats = fs.statSync(filePath);
+      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+
+      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+
+      should(zlib.inflateRawSync(fs.readFileSync(filePath)).toString()).equal(value);
+
+      return cache.get(key).then(function(detail) {
+        should(detail.value).equal(value);
+      });
+    });
+  });
+});
