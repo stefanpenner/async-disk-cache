@@ -94,7 +94,7 @@ describe('cache compress: [ deflate ]', function() {
   });
 
   afterEach(function() {
-    cache.clear();
+    return cache.clear();
   });
 
   it('set', function() {
