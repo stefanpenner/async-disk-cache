@@ -3,6 +3,8 @@
 
 An aync disk cache. inspired by [jgable/cache-swap](https://github.com/jgable/cache-swap)
 
+A sync sibling version is also available: [stefanpenner/sync-disk-cache](https://github.com/stefanpenner/sync-disk-cache/)
+
 ## Example
 
 ```js
