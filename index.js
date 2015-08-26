@@ -148,18 +148,30 @@ Cache.prototype.set = function(key, value) {
   debug('set : %s', filePath);
   var cache = this;
 
-  return mkdirp(path.dirname(filePath), mode).then(function() {
-    return cache.compress(value).then(function(value) {
-      return writeFile(filePath, value, mode).then(function() {
-        return chmod(filePath, mode.mode).then(function() {
-          return filePath;
-        });
-      });
+  return cache.compress(value).then(function(value) {
+    return writeP(filePath, value, mode.mode).then(function() {
+      return filePath;
     });
   });
 
   return filePath;
 };
+
+function writeP(filePath, content, mode) {
+  var base = path.dirname(filePath);
+
+  return writeFile(filePath, content).catch(function(reason) {
+    if (reason && reason.code === 'ENOENT') {
+      return mkdirp(base).then(function() {
+        return writeFile(filePath, content);
+      });
+    } else {
+      throw reason;
+    }
+  }).then(function(){
+    return chmod(filePath, mode);
+  });
+}
 
 /*
  * @public
