@@ -81,7 +81,7 @@ function Cache(key, _) {
   this.tmpDir = options.location|| tmpDir;
   this.compression = options.compression;
   this.key = key || 'default-disk-cache';
-  this.root = path.join(this.tmpDir, this.key);
+  this.root = path.join(this.tmpDir, 'async-disk-cache', this.key);
 
   debug('new Cache { root: %s, compression: %s }', this.root, this.compression);
 }
