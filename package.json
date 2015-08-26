@@ -1,6 +1,6 @@
 {
   "name": "async-disk-cache",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Async disk cache",
   "files": [
     "index.js",
