@@ -5,17 +5,13 @@ var RSVP = require('rsvp');
 var fs = require('fs');
 var readFile = RSVP.denodeify(fs.readFile);
 var writeFile = RSVP.denodeify(fs.writeFile);
+var chmod = RSVP.denodeify(fs.chmod);
 var mkdirp = RSVP.denodeify(require('mkdirp'));
 var rimraf = RSVP.denodeify(require('rimraf'));
 var unlink = RSVP.denodeify(fs.unlink);
-var chmod = RSVP.denodeify(fs.chmod);
 var tmpDir = require('os').tmpDir();
 var debug = require('debug')('async-disk-cache');
 var zlib = require('zlib');
-
-var mode = {
-  mode: parseInt('0777', 8)
-};
 
 var CacheEntry = require('./lib/cache-entry');
 /*
@@ -149,15 +145,13 @@ Cache.prototype.set = function(key, value) {
   var cache = this;
 
   return cache.compress(value).then(function(value) {
-    return writeP(filePath, value, mode.mode).then(function() {
+    return writeP(filePath, value).then(function() {
       return filePath;
     });
   });
-
-  return filePath;
 };
 
-function writeP(filePath, content, mode) {
+function writeP(filePath, content) {
   var base = path.dirname(filePath);
 
   return writeFile(filePath, content).catch(function(reason) {
@@ -168,8 +162,8 @@ function writeP(filePath, content, mode) {
     } else {
       throw reason;
     }
-  }).then(function(){
-    return chmod(filePath, mode);
+  }).then(function() {
+    return chmod(filePath,  parseInt('0666', 8));
   });
 }
 

@@ -3,8 +3,10 @@
 var path = require('path');
 var Cache = require('./');
 var fs = require('fs');
-var should = require('should');
+var chai = require('chai');
+var expect = chai.expect;
 var RSVP = require('rsvp');
+var Mode = require('stat-mode');
 
 describe('cache', function() {
   var cache;
@@ -20,48 +22,46 @@ describe('cache', function() {
   });
 
   it('pathFor', function() {
-    var expect = path.join(cache.root, key);
-
-    cache.pathFor(key).should.equal(expect);
+    expect(cache.pathFor(key)).to.be.equal(path.join(cache.root, key));
   });
 
   it('set', function() {
     return cache.set(key, value).then(function(filePath) {
       // credit @jgable
-      var stats = fs.statSync(filePath);
-      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
-      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+      var mode = new Mode(fs.statSync(filePath));
 
-      should(fs.readFileSync(filePath).toString()).equal(value);
+      expect(mode.toString()).to.equal('-rw-rw-rw-');
+
+      expect(fs.readFileSync(filePath).toString()).equal(value);
     });
   });
 
   it('get (doesn\'t exist)', function() {
     return cache.get(key).then(function(details) {
-      should(details.isCached).be.false;
+      expect(details.isCached).be.false;
     });
   });
 
   it('get (does exist)', function() {
     return cache.set(key, value).then(function(filePath) {
       return cache.get(key).then(function(details) {
-        should(details.isCached).be.true;
-        should(details.value).equal(value);
-        should(details.key).equal(filePath);
+        expect(details.isCached).be.true;
+        expect(details.value).equal(value);
+        expect(details.key).equal(filePath);
       });
     });
   });
 
   it('has (doesn\'t exist)', function() {
     return cache.has(key).then(function(exists) {
-      should(exists).be.false;
+      expect(exists).be.false;
     });
   });
 
   it('has (does exist)', function() {
     return cache.set(key, value).then(function() {
       return cache.has(key).then(function(exists) {
-        should(exists).be.true;
+        expect(exists).be.true;
       });
     });
   });
@@ -69,11 +69,11 @@ describe('cache', function() {
   it('remove', function() {
     return cache.set(key, value).then(function() {
       return cache.has(key).then(function(exists) {
-        should(exists).be.true;
+        expect(exists).be.true;
 
         return cache.remove(key).then(function() {
           return cache.has(key).then(function(exists) {
-            should(exists).be.false;
+            expect(exists).be.false;
           });
         });
       });
@@ -103,16 +103,16 @@ describe('cache compress: [ deflate ]', function() {
 
   it('set', function() {
     return cache.set(key, value).then(function(filePath) {
-      var stats = fs.statSync(filePath);
-      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+      var mode = new Mode(fs.statSync(filePath));
 
-      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+      expect(mode.toString()).to.equal('-rw-rw-rw-');
+
       return inflate(fs.readFileSync(filePath)).then(function(result){
         var result = result.toString();
-        should(result).equal(value);
+        expect(result).equal(value);
 
         return cache.get(key).then(function(detail) {
-          should(detail.value).equal(value);
+          expect(detail.value).equal(value);
         });
       });
     });
@@ -137,17 +137,16 @@ describe('cache compress: [ gzip ]', function() {
   it('set', function() {
     return cache.set(key, value).then(function(filePath){
       var stats = fs.statSync(filePath);
-      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+      var mode = new Mode(fs.statSync(filePath));
 
-      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
 
       return gunzip(fs.readFileSync(filePath)).then(function(result){
         var result = result.toString();
 
-        should(result).equal(value);
+        expect(result).equal(value);
 
         return cache.get(key).then(function(detail){
-          should(detail.value).equal(value);
+          expect(detail.value).equal(value);
         });
       });
     })
@@ -171,17 +170,16 @@ describe('cache compress: [ deflateRaw ]', function() {
 
   it('set', function() {
     return cache.set(key, value).then(function(filePath) {
-      var stats = fs.statSync(filePath);
-      var mode = '0' + (stats.mode & parseInt('777', 8)).toString(8);
+      var mode = new Mode(fs.statSync(filePath));
 
-      should(mode).equal(process.platform === 'win32' ? '0666' : '0777');
+      expect(mode.toString()).to.equal('-rw-rw-rw-');
 
       return inflateRaw(fs.readFileSync(filePath)).then(function(result){
         var result = result.toString();
-        should(result).equal(value);
+        expect(result).equal(value);
 
         return cache.get(key).then(function(detail) {
-          should(detail.value).equal(value);
+          expect(detail.value).equal(value);
         });
       });
 
