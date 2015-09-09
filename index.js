@@ -156,7 +156,7 @@ function writeP(filePath, content) {
 
   return writeFile(filePath, content).catch(function(reason) {
     if (reason && reason.code === 'ENOENT') {
-      return mkdirp(base).then(function() {
+      return mkdirp(base, { mode: '0775' }).then(function() {
         return writeFile(filePath, content);
       });
     } else {
