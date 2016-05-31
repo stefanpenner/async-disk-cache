@@ -149,7 +149,7 @@ describe('cache compress: [ gzip ]', function() {
           expect(detail.value).equal(value);
         });
       });
-    })
+    });
   });
 });
 
@@ -183,6 +183,37 @@ describe('cache compress: [ deflateRaw ]', function() {
         });
       });
 
+    });
+  });
+});
+
+
+describe('huge buffer fixed demo', function() {
+  var key = 'buffer_fixed';
+  var value = fs.readFileSync('./common/bufferdemo.png');
+  var cache = new Cache('my-testing-cache');
+
+  it('set', function(done) {
+
+    // set file to cache
+    cache.set(key, value).then(function() {
+
+      // get file from cache
+      cache.get(key).then(function(cacheEntry) {
+        // console.log(cacheEntry.value.length);
+
+        fs.writeFileSync('./common/bufferdemo_fromcache_fixed.png', cacheEntry.value);
+
+        var oldFile = fs.readFileSync('./common/bufferdemo.png');
+        var newFile = fs.readFileSync('./common/bufferdemo_fromcache_fixed.png');
+
+        if (oldFile.toString('binary') !== newFile.toString('binary')) {
+          done(new Error('Files didn\'t match!'));
+        } else {
+          done();
+        }
+
+      });
     });
   });
 });
