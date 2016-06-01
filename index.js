@@ -12,6 +12,7 @@ var unlink = RSVP.denodeify(fs.unlink);
 var tmpDir = require('os').tmpDir();
 var debug = require('debug')('async-disk-cache');
 var zlib = require('zlib');
+var istextorbinary = require('istextorbinary');
 
 var CacheEntry = require('./lib/cache-entry');
 /*
@@ -23,7 +24,13 @@ var CacheEntry = require('./lib/cache-entry');
 function processFile(decompress, filePath) {
   return function(fileStream) {
     return decompress(fileStream).then(function(value){
-      return new CacheEntry(true, filePath, '' + value);
+
+      // is Buffer or string? >:D
+      if (istextorbinary.isTextSync(false, value)) {
+        value = value.toString();
+      }
+
+      return new CacheEntry(true, filePath, value);
     });
   };
 }
