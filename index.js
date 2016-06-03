@@ -15,6 +15,7 @@ var zlib = require('zlib');
 var istextorbinary = require('istextorbinary');
 
 var CacheEntry = require('./lib/cache-entry');
+
 /*
  * @private
  * @method processFile
@@ -22,12 +23,19 @@ var CacheEntry = require('./lib/cache-entry');
  * @returns CacheEntry an object representing that cache entry
  */
 function processFile(decompress, filePath) {
+  // es5 workaround to keep scope with opts.
+  var self = this; // jshint ignore:line
+
   return function(fileStream) {
     return decompress(fileStream).then(function(value){
 
+
       // is Buffer or string? >:D
-      if (istextorbinary.isTextSync(false, value)) {
+      if (!self.supportBuffer || istextorbinary.isTextSync(false, value)) {
+        debug('convert to string');
         value = value.toString();
+      } else {
+        debug('keep data as Buffer');
       }
 
       return new CacheEntry(true, filePath, value);
@@ -82,7 +90,8 @@ var COMPRESSIONS = {
 function Cache(key, _) {
   var options = _ || {};
   this.tmpDir = options.location|| tmpDir;
-  this.compression = options.compression;
+  this.compression = options.compression || false;
+  this.supportBuffer = options.supportBuffer || false;
   this.key = key || 'default-disk-cache';
   this.root = path.join(this.tmpDir, 'async-disk-cache', this.key);
 
@@ -134,7 +143,7 @@ Cache.prototype.get = function(key) {
   debug('get: %s', filePath);
 
   return readFile(filePath).
-    then(processFile(this.decompress.bind(this), filePath), handleENOENT);
+    then(processFile.call(this, this.decompress.bind(this), filePath), handleENOENT);
 };
 
 /*

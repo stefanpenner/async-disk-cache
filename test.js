@@ -108,7 +108,7 @@ describe('cache compress: [ deflate ]', function() {
       expect(mode.toString()).to.equal('-rw-rw-rw-');
 
       return inflate(fs.readFileSync(filePath)).then(function(result){
-        var result = result.toString();
+        result = result.toString();
         expect(result).equal(value);
 
         return cache.get(key).then(function(detail) {
@@ -136,12 +136,9 @@ describe('cache compress: [ gzip ]', function() {
 
   it('set', function() {
     return cache.set(key, value).then(function(filePath){
-      var stats = fs.statSync(filePath);
-      var mode = new Mode(fs.statSync(filePath));
-
 
       return gunzip(fs.readFileSync(filePath)).then(function(result){
-        var result = result.toString();
+        result = result.toString();
 
         expect(result).equal(value);
 
@@ -175,7 +172,7 @@ describe('cache compress: [ deflateRaw ]', function() {
       expect(mode.toString()).to.equal('-rw-rw-rw-');
 
       return inflateRaw(fs.readFileSync(filePath)).then(function(result){
-        var result = result.toString();
+        result = result.toString();
         expect(result).equal(value);
 
         return cache.get(key).then(function(detail) {
@@ -188,7 +185,37 @@ describe('cache compress: [ deflateRaw ]', function() {
 });
 
 
-describe('huge buffer fixed demo', function() {
+describe('buffer support', function() {
+  var key = 'buffer_fixed';
+  var value = fs.readFileSync('./common/bufferdemo.png');
+  var cache = new Cache('my-testing-cache', { supportBuffer: true });
+
+  it('set', function(done) {
+
+    // set file to cache
+    cache.set(key, value).then(function() {
+
+      // get file from cache
+      cache.get(key).then(function(cacheEntry) {
+        // console.log(cacheEntry.value.length);
+
+        fs.writeFileSync('./common/bufferdemo_fromcache.png', cacheEntry.value);
+
+        var oldFile = fs.readFileSync('./common/bufferdemo.png');
+        var newFile = fs.readFileSync('./common/bufferdemo_fromcache.png');
+
+        if (oldFile.toString('binary') !== newFile.toString('binary')) {
+          done(new Error('Files didn\'t match!'));
+        } else {
+          done();
+        }
+
+      });
+    });
+  });
+});
+
+describe('buffer support disabled', function() {
   var key = 'buffer_fixed';
   var value = fs.readFileSync('./common/bufferdemo.png');
   var cache = new Cache('my-testing-cache');
@@ -202,15 +229,15 @@ describe('huge buffer fixed demo', function() {
       cache.get(key).then(function(cacheEntry) {
         // console.log(cacheEntry.value.length);
 
-        fs.writeFileSync('./common/bufferdemo_fromcache_fixed.png', cacheEntry.value);
+        fs.writeFileSync('./common/bufferdemo_fromcache.png', cacheEntry.value);
 
         var oldFile = fs.readFileSync('./common/bufferdemo.png');
-        var newFile = fs.readFileSync('./common/bufferdemo_fromcache_fixed.png');
+        var newFile = fs.readFileSync('./common/bufferdemo_fromcache.png');
 
         if (oldFile.toString('binary') !== newFile.toString('binary')) {
-          done(new Error('Files didn\'t match!'));
-        } else {
           done();
+        } else {
+          done(new Error('Files still matches, looks like nodejs community has fixed Buffer -> to string -> to buffer conversion bug. Applaud!'));
         }
 
       });
