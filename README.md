@@ -1,4 +1,4 @@
-# async-disk-cache [![Build status](https://ci.appveyor.com/api/projects/status/lfliompah66m611x?svg=true)](https://ci.appveyor.com/project/embercli/async-disk-cache) [![Build Status](https://travis-ci.org/stefanpenner/async-disk-cache.svg)](https://travis-ci.org/stefanpenner/async-disk-cache) [![Build status](https://ci.appveyor.com/api/projects/status/lfliompah66m611x?svg=true)](https://ci.appveyor.com/project/embercli/async-disk-cache)
+# async-disk-cache [![Build status](https://ci.appveyor.com/api/projects/status/lfliompah66m611x?svg=true)](https://ci.appveyor.com/project/embercli/async-disk-cache) [![Build Status](https://travis-ci.org/stefanpenner/async-disk-cache.svg)](https://travis-ci.org/stefanpenner/async-disk-cache) 
 
 An aync disk cache. inspired by [jgable/cache-swap](https://github.com/jgable/cache-swap)
 
@@ -23,7 +23,7 @@ cache.get('foo').then(function(cacheEntry) {
   cacheEntry === {
     isCached: true,
     path: 'foo',
-    content: 'content of foo'
+    value: 'content of foo'
   }
 });
 
@@ -32,7 +32,7 @@ cache.get('foo').then(function(cacheEntry) {
   cacheEntry === {
     isCached: false,
     path: 'foo',
-    content: undefined
+    value: undefined
   }
 });
 
