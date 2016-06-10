@@ -12,7 +12,6 @@ var unlink = RSVP.denodeify(fs.unlink);
 var tmpDir = require('os').tmpDir();
 var debug = require('debug')('async-disk-cache');
 var zlib = require('zlib');
-var istextorbinary = require('istextorbinary');
 
 var CacheEntry = require('./lib/cache-entry');
 
@@ -31,7 +30,7 @@ function processFile(decompress, filePath) {
 
 
       // is Buffer or string? >:D
-      if (!self.supportBuffer || istextorbinary.isTextSync(false, value)) {
+      if (!self.supportBuffer || require('istextorbinary').isTextSync(false, value)) {
         debug('convert to string');
         value = value.toString();
       } else {
