@@ -92,7 +92,7 @@ function Cache(key, _) {
   this.compression = options.compression || false;
   this.supportBuffer = options.supportBuffer || false;
   this.key = key || 'default-disk-cache';
-  this.root = path.join(this.tmpDir, 'async-disk-cache', this.key);
+  this.root = path.join(this.tmpDir, 'if-you-need-to-delete-this-open-an-issue-async-disk-cache', this.key);
 
   debug('new Cache { root: %s, compression: %s }', this.root, this.compression);
 }
