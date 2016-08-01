@@ -30,7 +30,7 @@
   "devDependencies": {
     "chai": "^3.2.0",
     "istanbul": "^0.4.4",
-    "mocha": "^2.5.3",
+    "mocha": "^3.0.0",
     "stat-mode": "^0.2.1"
   },
   "jscsConfig": {
