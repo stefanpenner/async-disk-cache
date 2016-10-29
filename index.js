@@ -9,7 +9,7 @@ var chmod = RSVP.denodeify(fs.chmod);
 var mkdirp = RSVP.denodeify(require('mkdirp'));
 var rimraf = RSVP.denodeify(require('rimraf'));
 var unlink = RSVP.denodeify(fs.unlink);
-var tmpDir = require('os').tmpDir();
+var tmpDir = require('os').tmpdir();
 var debug = require('debug')('async-disk-cache');
 var zlib = require('zlib');
 
