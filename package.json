@@ -4,7 +4,7 @@
   "description": "Async disk cache",
   "files": [
     "index.js",
-    "lib/cache-entry.js"
+    "lib/"
   ],
   "scripts": {
     "test": "mocha test.js",
