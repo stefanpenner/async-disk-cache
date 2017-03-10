@@ -32,7 +32,7 @@ describe('cache', function() {
   });
 
   it('pathFor', function() {
-    expect(cache.pathFor(key)).to.be.equal(path.join(cache.root, key));
+    expect(cache.pathFor(key)).to.be.equal(path.join(cache.root, new Buffer(key).toString('base64')));
   });
 
   it('set', function() {

@@ -246,7 +246,7 @@ defineFunction(Cache.prototype, 'remove', function(key) {
  * @returns the path where the key's value may reside
  */
 defineFunction(Cache.prototype, 'pathFor', function(key) {
-  return path.join(this.root, key);
+  return path.join(this.root, new Buffer(key).toString('base64'));
 });
 
 /*
