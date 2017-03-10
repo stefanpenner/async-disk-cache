@@ -9,7 +9,7 @@ var chmod = RSVP.denodeify(fs.chmod);
 var mkdirp = RSVP.denodeify(require('mkdirp'));
 var rimraf = RSVP.denodeify(require('rimraf'));
 var unlink = RSVP.denodeify(fs.unlink);
-var tmpDir = require('os').tmpdir();
+var os = require('os');
 var debug = require('debug')('async-disk-cache');
 var zlib = require('zlib');
 var heimdall = require('heimdalljs');
@@ -20,6 +20,9 @@ var Metric = require('./lib/metric');
 if (!heimdall.hasMonitor('async-disk-cache')) {
   heimdall.registerMonitor('async-disk-cache', function AsyncDiskCacheSchema() {});
 }
+
+var username = require('username').sync();
+var tmpdir = path.join(os.tmpdir(), username);
 
 /*
  * @private
@@ -126,11 +129,11 @@ var COMPRESSIONS = {
  */
 function Cache(key, _) {
   var options = _ || {};
-  this.tmpDir = options.location|| tmpDir;
+  this.tmpdir = options.location|| tmpdir;
   this.compression = options.compression || false;
   this.supportBuffer = options.supportBuffer || false;
   this.key = key || 'default-disk-cache';
-  this.root = path.join(this.tmpDir, 'if-you-need-to-delete-this-open-an-issue-async-disk-cache', this.key);
+  this.root = path.join(this.tmpdir, 'if-you-need-to-delete-this-open-an-issue-async-disk-cache', this.key);
 
   debug('new Cache { root: %s, compression: %s }', this.root, this.compression);
 }
