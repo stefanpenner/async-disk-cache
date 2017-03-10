@@ -21,6 +21,16 @@ describe('cache', function() {
     return cache.clear();
   });
 
+  it('has expected default root', function() {
+    var os = require('os');
+    var tmpdir = os.tmpdir();
+    var username = require('username').sync();
+    var descriptiveName = 'if-you-need-to-delete-this-open-an-issue-async-disk-cache';
+    var defaultKey = 'default-disk-cache';
+
+    expect(cache.root).to.eql(path.join(tmpdir, username, descriptiveName, defaultKey));
+  });
+
   it('pathFor', function() {
     expect(cache.pathFor(key)).to.be.equal(path.join(cache.root, key));
   });
