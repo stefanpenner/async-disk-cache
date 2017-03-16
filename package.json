@@ -26,8 +26,7 @@
     "istextorbinary": "2.1.0",
     "mkdirp": "^0.5.0",
     "rimraf": "^2.5.3",
-    "rsvp": "^3.0.18",
-    "username": "^2.3.0"
+    "rsvp": "^3.0.18"
   },
   "devDependencies": {
     "chai": "^3.2.0",

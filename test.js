@@ -24,7 +24,7 @@ describe('cache', function() {
   it('has expected default root', function() {
     var os = require('os');
     var tmpdir = os.tmpdir();
-    var username = require('username').sync();
+    var username = require('child_process').execSync('whoami').toString().trim();
     var descriptiveName = 'if-you-need-to-delete-this-open-an-issue-async-disk-cache';
     var defaultKey = 'default-disk-cache';
 
