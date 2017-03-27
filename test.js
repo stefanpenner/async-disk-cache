@@ -12,6 +12,7 @@ describe('cache', function() {
   var cache;
   var key = 'path/to/file.js';
   var value = 'Some test value';
+  var longKey = 'GET|https://api.example.com/lorem/ipsum/dolor/sit/amet/consectetur/adipiscing/elit?donec=in&consequat=nibh&mauris=condimentum&turpis=at&lacus=finibus&ut=rutrum&lorem=dictum&morbi=dictum&ac=lectus&et=porttitor&donec=vel&dolor=ex&cras=aliquam&risus=in&tellus=mollis&elementum=pellentesque&lobortis=a&ex=nec&egestas=nunc&nec=feugiat&ante=integer&sit=amet&nibh=id&nisi=vulputate&condimentum=aliquam&lacinia=dignissim';
 
   beforeEach(function() {
     cache = new Cache();
@@ -33,6 +34,7 @@ describe('cache', function() {
 
   it('pathFor', function() {
     expect(cache.pathFor(key)).to.be.equal(path.join(cache.root, new Buffer(key).toString('base64')));
+    expect(cache.pathFor(longKey)).to.be.equal(path.join(cache.root, 'R0VUfGh0dHBzOi8vYXBpLmV4YW1wbGUuY29tL2xvcmVtL2lwc3VtL2RvbG9yL3NpdC9hbWV0L2NvbnNlY3RldHVyL2FkaXBpc2NpbmcvZWxpdD9kb25lYz1pbiZjb25zZXF1YXQ9bmliaCZtYXVyaXM9Y29uZGltZW50dW0mdHVycGlzPWF0JmxhY3VzPWZpbmlidXMmdXQ9cnV0cnVtJmxvcmVtPWRpY3R1bSZtb3JiaT1kaWN0dW0mYWM9bGVjdHVzJmV0PXBvcnR0aXRvciZkb25lYz12ZWwmZG9sb3I9ZXgmY3Jhcz1hbGlxdWFtJnJpc3VzPWluJnRlbGx1cz1tb2xsaXMmZWxlbWVudHVtPXBlbGxlbnRlc3F1ZSZsb2JvcnRpcz1hJmV4PW5lYyZlZ2VzdGFzPW51bmMmbmVjPWZldWdpYXQmYW50ZT1pbnRlZ2VyJnNpdD1hbWV0Jm5pYmg9aWQmbmlzaT12dWxwdXRhdGUmY29uZGltZW50dW09YWxpcXVhbSZsYWNpbmlhPWRpZ25pc3NpbQ=='));
   });
 
   it('set', function() {
@@ -71,6 +73,14 @@ describe('cache', function() {
   it('has (does exist)', function() {
     return cache.set(key, value).then(function() {
       return cache.has(key).then(function(exists) {
+        expect(exists).be.true;
+      });
+    });
+  });
+
+  it('has (does exist) (long key)', function() {
+    return cache.set(longKey, value).then(function() {
+      return cache.has(longKey).then(function(exists) {
         expect(exists).be.true;
       });
     });
