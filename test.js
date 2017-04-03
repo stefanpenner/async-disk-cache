@@ -2,6 +2,7 @@
 
 var path = require('path');
 var Cache = require('./');
+var Metric = require('./lib/metric');
 var fs = require('fs');
 var chai = require('chai');
 var expect = chai.expect;
@@ -88,6 +89,17 @@ describe('cache', function() {
         });
       });
     });
+  });
+
+  it('handles concurrent operations', function() {
+    return RSVP.all([
+      cache.get(key).then(function(details) {
+        expect(details.isCached).be.false;
+      }),
+      cache.get(key).then(function(details) {
+        expect(details.isCached).be.false;
+      })
+    ]);
   });
 });
 
@@ -254,3 +266,27 @@ if (!/v0\.10/.test(process.version)) {
     });
   });
 }
+
+describe('metric', function() {
+  it('throws error if stop called more than start', function() {
+    var metric = new Metric();
+    expect(function() {
+      metric.stop();
+    }).to.throw('Called stop more times than start was called');
+  });
+
+  it('can safely call start and stop multiple times', function() {
+    var metric = new Metric();
+
+    metric.start();
+    metric.start();
+    metric.stop();
+    metric.start();
+    metric.stop();
+    metric.stop();
+
+    var json = metric.toJSON();
+    expect(json.count).to.equal(3);
+    expect(json.time).to.be.greaterThan(0);
+  });
+});
