@@ -8,11 +8,15 @@ var chai = require('chai');
 var expect = chai.expect;
 var RSVP = require('rsvp');
 var Mode = require('stat-mode');
+var crypto = require('crypto');
 
 describe('cache', function() {
   var cache;
   var key = 'path/to/file.js';
   var value = 'Some test value';
+  var longKey = 'GET|https://api.example.com/lorem/ipsum/dolor/sit/amet/consectetur/adipiscing/elit?donec=in&consequat=nibh&mauris=condimentum&turpis=at&lacus=finibus&ut=rutrum&lorem=dictum&morbi=dictum&ac=lectus&et=porttitor&donec=vel&dolor=ex&cras=aliquam&risus=in&tellus=mollis&elementum=pellentesque&lobortis=a&ex=nec&egestas=nunc&nec=feugiat&ante=integer&sit=amet&nibh=id&nisi=vulputate&condimentum=aliquam&lacinia=dignissim';
+  var keyHash = crypto.createHash('sha1').update(key).digest('hex');
+  var longKeyHash = crypto.createHash('sha1').update(longKey).digest('hex');
 
   beforeEach(function() {
     cache = new Cache();
@@ -33,7 +37,8 @@ describe('cache', function() {
   });
 
   it('pathFor', function() {
-    expect(cache.pathFor(key)).to.be.equal(path.join(cache.root, new Buffer(key).toString('base64')));
+    expect(cache.pathFor(key)).to.be.equal(path.join(cache.root, keyHash));
+    expect(cache.pathFor(longKey)).to.be.equal(path.join(cache.root, longKeyHash));
   });
 
   it('set', function() {
@@ -72,6 +77,14 @@ describe('cache', function() {
   it('has (does exist)', function() {
     return cache.set(key, value).then(function() {
       return cache.has(key).then(function(exists) {
+        expect(exists).be.true;
+      });
+    });
+  });
+
+  it('has (does exist) (long key)', function() {
+    return cache.set(longKey, value).then(function() {
+      return cache.has(longKey).then(function(exists) {
         expect(exists).be.true;
       });
     });

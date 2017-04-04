@@ -13,6 +13,7 @@ var os = require('os');
 var debug = require('debug')('async-disk-cache');
 var zlib = require('zlib');
 var heimdall = require('heimdalljs');
+var crypto = require('crypto');
 
 var CacheEntry = require('./lib/cache-entry');
 var Metric = require('./lib/metric');
@@ -246,7 +247,7 @@ defineFunction(Cache.prototype, 'remove', function(key) {
  * @returns the path where the key's value may reside
  */
 defineFunction(Cache.prototype, 'pathFor', function(key) {
-  return path.join(this.root, new Buffer(key).toString('base64'));
+  return path.join(this.root, crypto.createHash('sha1').update(key).digest('hex'));
 });
 
 /*
