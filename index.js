@@ -44,16 +44,26 @@ function defineFunction(obj, name, fn) {
 
     metrics.start();
 
-    var result = fn.apply(this, arguments);
+    var result;
+    var didError = true;
+
+    try {
+      result = fn.apply(this, arguments);
+      didError = false;
+    } finally {
+      if (didError) {
+        metrics.stop();
+      }
+    }
 
     if (typeof result.finally === 'function') {
       return result.finally(function() {
         metrics.stop();
       });
-    } else {
-      metrics.stop();
-      return result;
     }
+
+    metrics.stop();
+    return result;
   };
 }
 
