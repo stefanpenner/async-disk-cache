@@ -9,6 +9,7 @@ var expect = chai.expect;
 var RSVP = require('rsvp');
 var Mode = require('stat-mode');
 var crypto = require('crypto');
+var heimdall = require('heimdalljs');
 
 describe('cache', function() {
   var cache;
@@ -113,6 +114,11 @@ describe('cache', function() {
         expect(details.isCached).be.false;
       })
     ]);
+  });
+
+  it('properly stops metrics when an error occurs', function() {
+    expect(function() { cache.pathFor(); }).to.throw();
+    expect(heimdall.statsFor('async-disk-cache').pathFor.startTime).to.be.undefined;
   });
 });
 
