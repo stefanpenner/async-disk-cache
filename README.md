@@ -52,7 +52,7 @@ cache.clear().then(function() {
 Enable compression:
 
 ```js
-var Cache = require('sync-disk-cache');
+var Cache = require('async-disk-cache');
 var cache = new Cache('my-cache', {
   compression: 'gzip' | 'deflate' | 'deflateRaw', // basically just what nodes zlib's ships with
   supportBuffer: 'true' | 'false' // add support for file caching (default `false`)
