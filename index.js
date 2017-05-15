@@ -22,7 +22,7 @@ if (!heimdall.hasMonitor('async-disk-cache')) {
   heimdall.registerMonitor('async-disk-cache', function AsyncDiskCacheSchema() {});
 }
 
-var username = require('child_process').execSync('whoami').toString().trim();
+var username = require('username-sync')();
 var tmpdir = path.join(os.tmpdir(), username);
 
 /*
