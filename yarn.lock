@@ -518,9 +518,9 @@ uglify-to-browserify@~1.0.0:
   version "1.0.2"
   resolved "https://registry.npmjs.org/uglify-to-browserify/-/uglify-to-browserify-1.0.2.tgz#6e0924d6bda6b5afe349e39a6d632850a0f882b7"
 
-username-sync@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/username-sync/-/username-sync-1.0.0.tgz#4d305662fb7d0bbc428f4d8698271eca8793888f"
+username-sync@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/username-sync/-/username-sync-1.0.1.tgz#1cde87eefcf94b8822984d938ba2b797426dae1f"
 
 which@^1.1.1:
   version "1.2.12"
