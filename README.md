@@ -1,8 +1,10 @@
 # async-disk-cache [![Build status](https://ci.appveyor.com/api/projects/status/lfliompah66m611x?svg=true)](https://ci.appveyor.com/project/embercli/async-disk-cache) [![Build Status](https://travis-ci.org/stefanpenner/async-disk-cache.svg)](https://travis-ci.org/stefanpenner/async-disk-cache) 
 
-An aync disk cache. inspired by [jgable/cache-swap](https://github.com/jgable/cache-swap)
+An async disk cache. inspired by [jgable/cache-swap](https://github.com/jgable/cache-swap)
 
 A sync sibling version is also available: [stefanpenner/sync-disk-cache](https://github.com/stefanpenner/sync-disk-cache/)
+
+By default, this will usge `TMPDIR/<username>/` for storage, but this can be changed by setting the `$TMPDIR` environment variable.
 
 ## Example
 
