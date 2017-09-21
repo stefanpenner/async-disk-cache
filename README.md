@@ -24,7 +24,7 @@ cache.has('foo').then(function(wasFooFound) {
 cache.get('foo').then(function(cacheEntry) {
   cacheEntry === {
     isCached: true,
-    path: 'foo',
+    key: 'foo',
     value: 'content of foo'
   }
 });
@@ -33,23 +33,26 @@ cache.get('foo').then(function(cacheEntry) {
 cache.get('foo').then(function(cacheEntry) {
   cacheEntry === {
     isCached: false,
-    path: 'foo',
+    key: 'foo',
     value: undefined
   }
 });
 
-// retrieving (cache miss)
+// setting
 cache.set('foo', 'content of foo').then(function() {
-  // was set
+  // foo was set
 });
 
-// clearing the cache
+// clearing one entry from the cache
+cache.remove('foo').then(function() {
+  // foo was removed
+})
 
+// clearing the whole cache
 cache.clear().then(function() {
   // cache was cleared
 })
 ```
-
 
 Enable compression:
 
