@@ -1,30 +1,30 @@
 'use strict';
 
-var path = require('path');
-var RSVP = require('rsvp');
-var fs = require('fs');
-var readFile = RSVP.denodeify(fs.readFile);
-var writeFile = RSVP.denodeify(fs.writeFile);
-var renameFile = RSVP.denodeify(fs.rename);
-var chmod = RSVP.denodeify(fs.chmod);
-var mkdirp = RSVP.denodeify(require('mkdirp'));
-var rimraf = RSVP.denodeify(require('rimraf'));
-var unlink = RSVP.denodeify(fs.unlink);
-var os = require('os');
-var debug = require('debug')('async-disk-cache');
-var zlib = require('zlib');
-var heimdall = require('heimdalljs');
-var crypto = require('crypto');
+const path = require('path');
+const RSVP = require('rsvp');
+const fs = require('fs');
+const readFile = RSVP.denodeify(fs.readFile);
+const writeFile = RSVP.denodeify(fs.writeFile);
+const renameFile = RSVP.denodeify(fs.rename);
+const chmod = RSVP.denodeify(fs.chmod);
+const mkdirp = RSVP.denodeify(require('mkdirp'));
+const rimraf = RSVP.denodeify(require('rimraf'));
+const unlink = RSVP.denodeify(fs.unlink);
+const os = require('os');
+const debug = require('debug')('async-disk-cache');
+const zlib = require('zlib');
+const heimdall = require('heimdalljs');
+const crypto = require('crypto');
 
-var CacheEntry = require('./lib/cache-entry');
-var Metric = require('./lib/metric');
+const CacheEntry = require('./lib/cache-entry');
+const Metric = require('./lib/metric');
 
 if (!heimdall.hasMonitor('async-disk-cache')) {
   heimdall.registerMonitor('async-disk-cache', function AsyncDiskCacheSchema() {});
 }
 
-var username = require('username-sync')();
-var tmpdir = path.join(os.tmpdir(), username);
+const username = require('username-sync')();
+const tmpdir = path.join(os.tmpdir(), username);
 
 /*
  * @private
@@ -40,13 +40,13 @@ var tmpdir = path.join(os.tmpdir(), username);
  */
 function defineFunction(obj, name, fn) {
   obj[name] = function() {
-    var stats = heimdall.statsFor('async-disk-cache');
-    var metrics = stats[name] = stats[name] || new Metric();
+    const stats = heimdall.statsFor('async-disk-cache');
+    const metrics = stats[name] = stats[name] || new Metric();
 
     metrics.start();
 
-    var result;
-    var didError = true;
+    let result;
+    let didError = true;
 
     try {
       result = fn.apply(this, arguments);
@@ -58,9 +58,7 @@ function defineFunction(obj, name, fn) {
     }
 
     if (typeof result.finally === 'function') {
-      return result.finally(function() {
-        metrics.stop();
-      });
+      return result.finally(() => metrics.stop());
     }
 
     metrics.stop();
@@ -75,23 +73,18 @@ function defineFunction(obj, name, fn) {
  * @returns CacheEntry an object representing that cache entry
  */
 function processFile(decompress, filePath) {
-  // es5 workaround to keep scope with opts.
-  var self = this; // jshint ignore:line
+  return async (fileStream) => {
+    let value = await decompress(fileStream);
 
-  return function(fileStream) {
-    return decompress(fileStream).then(function(value){
+    // is Buffer or string? >:D
+    if (!this.supportBuffer || require('istextorbinary').isTextSync(false, value)) {
+      debug('convert to string');
+      value = value.toString();
+    } else {
+      debug('keep data as Buffer');
+    }
 
-
-      // is Buffer or string? >:D
-      if (!self.supportBuffer || require('istextorbinary').isTextSync(false, value)) {
-        debug('convert to string');
-        value = value.toString();
-      } else {
-        debug('keep data as Buffer');
-      }
-
-      return new CacheEntry(true, filePath, value);
-    });
+    return new CacheEntry(true, filePath, value);
   };
 }
 
@@ -116,7 +109,7 @@ function handleENOENT(reason) {
   throw reason;
 }
 
-var COMPRESSIONS = {
+const COMPRESSIONS = {
   deflate: {
     in: RSVP.denodeify(zlib.deflate),
     out: RSVP.denodeify(zlib.inflate)
@@ -139,15 +132,17 @@ var COMPRESSIONS = {
  * @param {String} options optional string path to the location for the
  *                          cache. If omitted the system tmpdir is used
  */
-function Cache(key, _) {
-  var options = _ || {};
-  this.tmpdir = options.location|| tmpdir;
-  this.compression = options.compression || false;
-  this.supportBuffer = options.supportBuffer || false;
-  this.key = key || 'default-disk-cache';
-  this.root = path.join(this.tmpdir, 'if-you-need-to-delete-this-open-an-issue-async-disk-cache', this.key);
+class Cache {
+  constructor(key, _) {
+    const options = _ || {};
+    this.tmpdir = options.location|| tmpdir;
+    this.compression = options.compression || false;
+    this.supportBuffer = options.supportBuffer || false;
+    this.key = key || 'default-disk-cache';
+    this.root = path.join(this.tmpdir, 'if-you-need-to-delete-this-open-an-issue-async-disk-cache', this.key);
 
-  debug('new Cache { root: %s, compression: %s }', this.root, this.compression);
+    debug('new Cache { root: %s, compression: %s }', this.root, this.compression);
+  }
 }
 
 /*
@@ -174,12 +169,9 @@ defineFunction(Cache.prototype, 'clear', function() {
  *                   - rejects when a failured occured when checking existence of the key
  */
 defineFunction(Cache.prototype, 'has', function(key) {
-  var filePath = this.pathFor(key);
+  const filePath = this.pathFor(key);
   debug('has: %s', filePath);
-
-  return new RSVP.Promise(function(resolve) {
-    fs.exists(filePath, resolve);
-  });
+  return new RSVP.Promise(resolve => fs.exists(filePath, resolve));
 });
 
 /*
@@ -191,7 +183,7 @@ defineFunction(Cache.prototype, 'has', function(key) {
  *                   - rejects when a failure occured looking retrieving the key
  */
 defineFunction(Cache.prototype, 'get', function(key) {
-  var filePath = this.pathFor(key);
+  const filePath = this.pathFor(key);
   debug('get: %s', filePath);
 
   return readFile(filePath).
@@ -207,38 +199,43 @@ defineFunction(Cache.prototype, 'get', function(key) {
  * @returns {Promise#fulfilled} if the value was coõstored as the key
  * @returns {Promise#rejected} when a failure occured persisting the key
  */
-defineFunction(Cache.prototype, 'set', function(key, value) {
-  var filePath = this.pathFor(key);
-  debug('set : %s', filePath);
-  var cache = this;
 
-  return cache.compress(value).then(function(value) {
-    return writeP(filePath, value).then(function() {
+
+defineFunction(Cache.prototype, 'set', function(key, value) {
+  // use RSVP to preserve public API as node 8 does not yet have Promise.prototype.finally
+
+  return new RSVP.Promise(resolve => {
+    resolve((async () => {
+      const filePath = this.pathFor(key);
+      debug('set : %s', filePath);
+      const cache = this;
+
+      await writeP(filePath, await cache.compress(value));
       return filePath;
-    });
+    })());
   });
 });
 
-var MAX_DIGITS = Math.pow(10, (Number.MAX_SAFE_INTEGER + '').length);
+const MAX_DIGITS = Math.pow(10, (Number.MAX_SAFE_INTEGER + '').length);
 
-function writeP(filePath, content) {
-  var base = path.dirname(filePath);
-  var random = Math.random() * MAX_DIGITS;
-  var tmpfile = filePath + '.tmp.' + random;
+async function writeP(filePath, content) {
+  const base = path.dirname(filePath);
+  const random = Math.random() * MAX_DIGITS;
+  const tmpfile = filePath + '.tmp.' + random;
 
-  return writeFile(tmpfile, content).catch(function(reason) {
+  try {
+    await writeFile(tmpfile, content)
+  } catch(reason) {
     if (reason && reason.code === 'ENOENT') {
-      return mkdirp(base, { mode: '0775' }).then(function() {
-        return writeFile(tmpfile, content);
-      });
+      await mkdirp(base, { mode: '0775' });
+      await writeFile(tmpfile, content);
     } else {
       throw reason;
     }
-  }).then(function() {
-    return renameFile(tmpfile, filePath);
-  }).then(function() {
-    return chmod(filePath,  parseInt('0666', 8));
-  });
+  }
+
+  await renameFile(tmpfile, filePath);
+  await chmod(filePath,  parseInt('0666', 8));
 }
 
 /*
@@ -250,10 +247,19 @@ function writeP(filePath, content) {
  * @returns {Promise#rejection} if something went wrong while removing the key
  */
 defineFunction(Cache.prototype, 'remove', function(key) {
-  var filePath = this.pathFor(key);
-  debug('remove : %s', filePath);
+  // use RSVP to preserve public API as node 8 does not yet have Promise.prototype.finally
+  return new RSVP.Promise(resolve => {
+    resolve((async () => {
+      const filePath = this.pathFor(key);
+      debug('remove : %s', filePath);
 
-  return unlink(filePath).catch(handleENOENT);
+      try {
+        await unlink(filePath);
+      } catch(e) {
+        await handleENOENT(e);
+      }
+    })());
+  });
 });
 
 /*
@@ -275,7 +281,10 @@ defineFunction(Cache.prototype, 'pathFor', function(key) {
  * @returns decompressedValue
  */
 defineFunction(Cache.prototype, 'decompress', function(value) {
-  if (!this.compression) { return RSVP.Promise.resolve(value); }
+  if (!this.compression) {
+    return value;
+  }
+
   return COMPRESSIONS[this.compression].out(value);
 });
 
@@ -287,7 +296,9 @@ defineFunction(Cache.prototype, 'decompress', function(value) {
  * @returns compressedValue
  */
 defineFunction(Cache.prototype, 'compress', function(value) {
-  if (!this.compression) { return RSVP.Promise.resolve(value); }
+  if (!this.compression) {
+    return value;
+  }
   return COMPRESSIONS[this.compression].in(value);
 });
 
