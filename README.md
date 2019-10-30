@@ -75,7 +75,6 @@ If your OS distribution does not provide such a cleanup mechanism:
 
 a) We stronglly recommend utilizing one, as other sync-disk-cache is not alone in rely on this behavior
 b) If that is not possible, we recommend changing your `$TMPDIR` to something project specific and manually purging it.
-c) Alternatively, you can completely disable the async disk cache via the environment variables `DISABLE_DISK_CACHE=true`
 
 ## License
 
