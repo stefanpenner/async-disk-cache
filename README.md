@@ -69,7 +69,7 @@ var cache = new Cache('my-cache', {
 ### description
 In general most OS distributions come with cron like tasks, which purge unused files in `$TMPDIR`. For example, ubuntu typically uses `tmpreaper` and macOS uses various tasks in `/etc/periodic/*`.
 
-## Solutions
+## options
 
 If your OS distribution does not provide such a cleanup mechanism:
 
