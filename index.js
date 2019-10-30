@@ -5,6 +5,7 @@ var RSVP = require('rsvp');
 var fs = require('fs');
 var readFile = RSVP.denodeify(fs.readFile);
 var writeFile = RSVP.denodeify(fs.writeFile);
+var renameFile = RSVP.denodeify(fs.rename);
 var chmod = RSVP.denodeify(fs.chmod);
 var mkdirp = RSVP.denodeify(require('mkdirp'));
 var rimraf = RSVP.denodeify(require('rimraf'));
@@ -218,17 +219,23 @@ defineFunction(Cache.prototype, 'set', function(key, value) {
   });
 });
 
+var MAX_DIGITS = Math.pow(10, (Number.MAX_SAFE_INTEGER + '').length);
+
 function writeP(filePath, content) {
   var base = path.dirname(filePath);
+  var random = Math.random() * MAX_DIGITS;
+  var tmpfile = filePath + '.tmp.' + random;
 
-  return writeFile(filePath, content).catch(function(reason) {
+  return writeFile(tmpfile, content).catch(function(reason) {
     if (reason && reason.code === 'ENOENT') {
       return mkdirp(base, { mode: '0775' }).then(function() {
-        return writeFile(filePath, content);
+        return writeFile(tmpfile, content);
       });
     } else {
       throw reason;
     }
+  }).then(function() {
+    return renameFile(tmpfile, filePath);
   }).then(function() {
     return chmod(filePath,  parseInt('0666', 8));
   });
