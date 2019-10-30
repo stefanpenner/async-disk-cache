@@ -1,23 +1,23 @@
 'use strict';
 
-var path = require('path');
-var Cache = require('./');
-var Metric = require('./lib/metric');
-var fs = require('fs');
-var chai = require('chai');
-var expect = chai.expect;
-var RSVP = require('rsvp');
-var Mode = require('stat-mode');
-var crypto = require('crypto');
-var heimdall = require('heimdalljs');
+const path = require('path');
+const Cache = require('./');
+const Metric = require('./lib/metric');
+const fs = require('fs');
+const chai = require('chai');
+const expect = chai.expect;
+const RSVP = require('rsvp');
+const Mode = require('stat-mode');
+const crypto = require('crypto');
+const heimdall = require('heimdalljs');
 
 describe('cache', function() {
-  var cache;
-  var key = 'path/to/file.js';
-  var value = 'Some test value';
-  var longKey = 'GET|https://api.example.com/lorem/ipsum/dolor/sit/amet/consectetur/adipiscing/elit?donec=in&consequat=nibh&mauris=condimentum&turpis=at&lacus=finibus&ut=rutrum&lorem=dictum&morbi=dictum&ac=lectus&et=porttitor&donec=vel&dolor=ex&cras=aliquam&risus=in&tellus=mollis&elementum=pellentesque&lobortis=a&ex=nec&egestas=nunc&nec=feugiat&ante=integer&sit=amet&nibh=id&nisi=vulputate&condimentum=aliquam&lacinia=dignissim';
-  var keyHash = crypto.createHash('sha1').update(key).digest('hex');
-  var longKeyHash = crypto.createHash('sha1').update(longKey).digest('hex');
+  let cache;
+  const key = 'path/to/file.js';
+  const value = 'Some test value';
+  const longKey = 'GET|https://api.example.com/lorem/ipsum/dolor/sit/amet/consectetur/adipiscing/elit?donec=in&consequat=nibh&mauris=condimentum&turpis=at&lacus=finibus&ut=rutrum&lorem=dictum&morbi=dictum&ac=lectus&et=porttitor&donec=vel&dolor=ex&cras=aliquam&risus=in&tellus=mollis&elementum=pellentesque&lobortis=a&ex=nec&egestas=nunc&nec=feugiat&ante=integer&sit=amet&nibh=id&nisi=vulputate&condimentum=aliquam&lacinia=dignissim';
+  const keyHash = crypto.createHash('sha1').update(key).digest('hex');
+  const longKeyHash = crypto.createHash('sha1').update(longKey).digest('hex');
 
   beforeEach(function() {
     cache = new Cache();
@@ -28,11 +28,11 @@ describe('cache', function() {
   });
 
   it('has expected default root', function() {
-    var os = require('os');
-    var tmpdir = os.tmpdir();
-    var username = require('username-sync')();
-    var descriptiveName = 'if-you-need-to-delete-this-open-an-issue-async-disk-cache';
-    var defaultKey = 'default-disk-cache';
+    let os = require('os');
+    let tmpdir = os.tmpdir();
+    let username = require('username-sync')();
+    let descriptiveName = 'if-you-need-to-delete-this-open-an-issue-async-disk-cache';
+    let defaultKey = 'default-disk-cache';
 
     expect(cache.root).to.eql(path.join(tmpdir, username, descriptiveName, defaultKey));
   });
@@ -42,95 +42,72 @@ describe('cache', function() {
     expect(cache.pathFor(longKey)).to.be.equal(path.join(cache.root, longKeyHash));
   });
 
-  it('set', function() {
-    return cache.set(key, value).then(function(filePath) {
-      // credit @jgable
-      var mode = new Mode(fs.statSync(filePath));
+  it('set', async function() {
+    let filePath = await cache.set(key, value);
+    // credit @jgable
+    let mode = new Mode(fs.statSync(filePath));
 
-      expect(mode.toString()).to.equal('-rw-rw-rw-');
+    expect(mode.toString()).to.equal('-rw-rw-rw-');
 
-      expect(fs.readFileSync(filePath).toString()).equal(value);
-    });
+    expect(fs.readFileSync(filePath).toString()).equal(value);
   });
 
-  it('get (doesn\'t exist)', function() {
-    return cache.get(key).then(function(details) {
-      expect(details.isCached).be.false;
-    });
+  it('get (doesn\'t exist)', async function() {
+    expect((await cache.get(key)).isCached).be.false;
   });
 
-  it('get (does exist)', function() {
-    return cache.set(key, value).then(function(filePath) {
-      return cache.get(key).then(function(details) {
-        expect(details.isCached).be.true;
-        expect(details.value).equal(value);
-        expect(details.key).equal(filePath);
-      });
-    });
+  it('get (does exist)', async function() {
+    let filePath = await cache.set(key, value);
+    let details = await cache.get(key);
+    expect(details.isCached).be.true;
+    expect(details.value).equal(value);
+    expect(details.key).equal(filePath);
   });
 
-  it('has (doesn\'t exist)', function() {
-    return cache.has(key).then(function(exists) {
-      expect(exists).be.false;
-    });
+  it('has (doesn\'t exist)', async function() {
+    expect(await cache.has(key)).be.false;
   });
 
-  it('has (does exist)', function() {
-    return cache.set(key, value).then(function() {
-      return cache.has(key).then(function(exists) {
-        expect(exists).be.true;
-      });
-    });
+  it('has (does exist)', async function() {
+    await cache.set(key, value);
+    expect(await cache.has(key)).be.true;
   });
 
-  it('has (does exist) (long key)', function() {
-    return cache.set(longKey, value).then(function() {
-      return cache.has(longKey).then(function(exists) {
-        expect(exists).be.true;
-      });
-    });
+  it('has (does exist) (long key)', async function() {
+    await cache.set(longKey, value)
+    expect(await cache.has(longKey)).be.true;
   });
 
-  it('remove', function() {
-    return cache.set(key, value).then(function() {
-      return cache.has(key).then(function(exists) {
-        expect(exists).be.true;
+  it('remove', async function() {
+    await cache.set(key, value)
+    expect(await cache.has(key)).be.true;
 
-        return cache.remove(key).then(function() {
-          return cache.has(key).then(function(exists) {
-            expect(exists).be.false;
-          });
-        });
-      });
-    });
+    await cache.remove(key);
+    expect(await cache.has(key)).be.false;
   });
 
-  it('handles concurrent operations', function() {
-    return RSVP.all([
-      cache.get(key).then(function(details) {
-        expect(details.isCached).be.false;
-      }),
-      cache.get(key).then(function(details) {
-        expect(details.isCached).be.false;
-      })
+  it('handles concurrent operations', async function() {
+    await RSVP.Promise.all([
+      cache.get(key).then(details => expect(details.isCached).be.false),
+      cache.get(key).then(details => expect(details.isCached).be.false)
     ]);
   });
 
   it('properly stops metrics when an error occurs', function() {
-    expect(function() { cache.pathFor(); }).to.throw();
+    expect(() => cache.pathFor()).to.throw();
     expect(heimdall.statsFor('async-disk-cache').pathFor.startTime).to.be.undefined;
   });
 });
 
-var zlib = require('zlib');
-var inflate = RSVP.denodeify(zlib.inflate);
-var gunzip = RSVP.denodeify(zlib.gunzip);
-var inflateRaw = RSVP.denodeify(zlib.inflateRaw);
+const zlib = require('zlib');
+const inflate = RSVP.denodeify(zlib.inflate);
+const gunzip = RSVP.denodeify(zlib.gunzip);
+const inflateRaw = RSVP.denodeify(zlib.inflateRaw);
 
 describe('cache compress: [ deflate ]', function() {
-  var cache;
-  var key = 'path/to/file.js';
-  var value = 'Some test value';
+  let cache;
+  let key = 'path/to/file.js';
+  let value = 'Some test value';
 
   beforeEach(function() {
     cache = new Cache('my-testing-cache', {
@@ -142,28 +119,25 @@ describe('cache compress: [ deflate ]', function() {
     return cache.clear();
   });
 
-  it('set', function() {
-    return cache.set(key, value).then(function(filePath) {
-      var mode = new Mode(fs.statSync(filePath));
+  it('set', async function() {
+    let filePath = await cache.set(key, value);
+    let mode = new Mode(fs.statSync(filePath));
 
-      expect(mode.toString()).to.equal('-rw-rw-rw-');
+    expect(mode.toString()).to.equal('-rw-rw-rw-');
 
-      return inflate(fs.readFileSync(filePath)).then(function(result){
-        result = result.toString();
-        expect(result).equal(value);
+    let result = await inflate(fs.readFileSync(filePath));
+    result = result.toString();
+    expect(result).equal(value);
 
-        return cache.get(key).then(function(detail) {
-          expect(detail.value).equal(value);
-        });
-      });
-    });
+    let detail = await cache.get(key);
+    expect(detail.value).equal(value);
   });
 });
 
 describe('cache compress: [ gzip ]', function() {
-  var cache;
-  var key = 'path/to/file.js';
-  var value = 'Some test value';
+  let cache;
+  let key = 'path/to/file.js';
+  let value = 'Some test value';
 
   beforeEach(function() {
     cache = new Cache('my-testing-cache', {
@@ -175,26 +149,22 @@ describe('cache compress: [ gzip ]', function() {
     return cache.clear();
   });
 
-  it('set', function() {
-    return cache.set(key, value).then(function(filePath){
+  it('set', async function() {
+    let filePath = await cache.set(key, value);
+    let result = await gunzip(fs.readFileSync(filePath));
+    result = result.toString();
 
-      return gunzip(fs.readFileSync(filePath)).then(function(result){
-        result = result.toString();
+    expect(result).equal(value);
 
-        expect(result).equal(value);
-
-        return cache.get(key).then(function(detail){
-          expect(detail.value).equal(value);
-        });
-      });
-    });
+    let detail = await cache.get(key);
+    expect(detail.value).equal(value);
   });
 });
 
 describe('cache compress: [ deflateRaw ]', function() {
-  var cache;
-  var key = 'path/to/file.js';
-  var value = 'Some test value';
+  let cache;
+  let key = 'path/to/file.js';
+  let value = 'Some test value';
 
   beforeEach(function() {
     cache = new Cache('my-testing-cache', {
@@ -206,96 +176,77 @@ describe('cache compress: [ deflateRaw ]', function() {
     return cache.clear();
   });
 
-  it('set', function() {
-    return cache.set(key, value).then(function(filePath) {
-      var mode = new Mode(fs.statSync(filePath));
+  it('set', async function() {
+    let filePath = await cache.set(key, value);
+    let mode = new Mode(fs.statSync(filePath));
 
-      expect(mode.toString()).to.equal('-rw-rw-rw-');
+    expect(mode.toString()).to.equal('-rw-rw-rw-');
 
-      return inflateRaw(fs.readFileSync(filePath)).then(function(result){
-        result = result.toString();
-        expect(result).equal(value);
+    let result = await inflateRaw(fs.readFileSync(filePath));
+    result = result.toString();
+    expect(result).equal(value);
 
-        return cache.get(key).then(function(detail) {
-          expect(detail.value).equal(value);
-        });
-      });
-    });
+    let detail = await cache.get(key);
+    expect(detail.value).equal(value);
   });
 });
 
-if (!/v0\.10/.test(process.version)) {
-  describe('buffer support', function() {
-    var key = 'buffer_fixed';
-    var value = fs.readFileSync('./common/bufferdemo.png');
-    var cache = new Cache('my-testing-cache', { supportBuffer: true });
+describe('buffer support', function() {
+  let key = 'buffer_fixed';
+  let value = fs.readFileSync('./common/bufferdemo.png');
+  let cache = new Cache('my-testing-cache', { supportBuffer: true });
 
-    it('set', function(done) {
+  it('set', async function() {
+    // set file to cache
+    await cache.set(key, value)
+    // get file from cache
+    const cacheEntry = await cache.get(key);
 
-      // set file to cache
-      cache.set(key, value).then(function() {
+    fs.writeFileSync('./common/bufferdemo_fromcache.png', cacheEntry.value);
 
-        // get file from cache
-        cache.get(key).then(function(cacheEntry) {
-          // console.log(cacheEntry.value.length);
+    let oldFile = fs.readFileSync('./common/bufferdemo.png');
+    let newFile = fs.readFileSync('./common/bufferdemo_fromcache.png');
 
-          fs.writeFileSync('./common/bufferdemo_fromcache.png', cacheEntry.value);
-
-          var oldFile = fs.readFileSync('./common/bufferdemo.png');
-          var newFile = fs.readFileSync('./common/bufferdemo_fromcache.png');
-
-          if (oldFile.toString('binary') !== newFile.toString('binary')) {
-            done(new Error('Files didn\'t match!'));
-          } else {
-            done();
-          }
-
-        });
-      });
-    });
+    if (oldFile.toString('binary') !== newFile.toString('binary')) {
+      throw new Error('Files didn\'t match!');
+    }
   });
+});
 
-  describe('buffer support disabled', function() {
-    var key = 'buffer_fixed';
-    var value = fs.readFileSync('./common/bufferdemo.png');
-    var cache = new Cache('my-testing-cache');
+describe('buffer support disabled', function() {
+  let key = 'buffer_fixed';
+  let value = fs.readFileSync('./common/bufferdemo.png');
+  let cache = new Cache('my-testing-cache');
 
-    it('set', function(done) {
+  it('set', async function() {
+    await cache.set(key, value);
 
-      // set file to cache
-      cache.set(key, value).then(function() {
+    // get file from cache
+    const cacheEntry = await cache.get(key);
 
-        // get file from cache
-        cache.get(key).then(function(cacheEntry) {
-          // console.log(cacheEntry.value.length);
+    fs.writeFileSync('./common/bufferdemo_fromcache.png', cacheEntry.value);
 
-          fs.writeFileSync('./common/bufferdemo_fromcache.png', cacheEntry.value);
+    let oldFile = fs.readFileSync('./common/bufferdemo.png');
+    let newFile = fs.readFileSync('./common/bufferdemo_fromcache.png');
 
-          var oldFile = fs.readFileSync('./common/bufferdemo.png');
-          var newFile = fs.readFileSync('./common/bufferdemo_fromcache.png');
+    if (oldFile.toString('binary') !== newFile.toString('binary')) {
 
-          if (oldFile.toString('binary') !== newFile.toString('binary')) {
-            done();
-          } else {
-            done(new Error('Files still matches, looks like nodejs community has fixed Buffer -> to string -> to buffer conversion bug. Applaud!'));
-          }
-
-        });
-      });
-    });
+    } else {
+      throw new Error('Files still matches, looks like nodejs community has fixed Buffer -> to string -> to buffer conversion bug. Applaud!');
+    }
   });
-}
+});
 
 describe('metric', function() {
   it('throws error if stop called more than start', function() {
-    var metric = new Metric();
-    expect(function() {
+    const metric = new Metric();
+    expect(() => {
       metric.stop();
     }).to.throw('Called stop more times than start was called');
   });
 
   it('can safely call start and stop multiple times', function() {
-    var metric = new Metric();
+    const metric = new Metric();
 
     metric.start();
     metric.start();
@@ -304,7 +255,7 @@ describe('metric', function() {
     metric.stop();
     metric.stop();
 
-    var json = metric.toJSON();
+    const json = metric.toJSON();
     expect(json.count).to.equal(3);
     expect(json.time).to.be.greaterThan(0);
   });
