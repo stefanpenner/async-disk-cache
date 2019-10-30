@@ -66,9 +66,16 @@ var cache = new Cache('my-cache', {
 
 ## HELP!...my TMP dir is growing unbounded!
 
+### description
 In general most OS distributions come with cron like tasks, which purge unused files in `$TMPDIR`. For example, ubuntu typically uses `tmpreaper` and macOS uses various tasks in `/etc/periodic/*`.
 
-If your OS distribution does not provide such a cleanup mechanism, we stronglly recommend utilizing one, as other sync-disk-cache is not alone in rely on this behavior. If that is not possible, we recommend changing your `$TMPDIR` to something project specific and manually purging it.
+## Solutions
+
+If your OS distribution does not provide such a cleanup mechanism:
+
+a) We stronglly recommend utilizing one, as other sync-disk-cache is not alone in rely on this behavior
+b) If that is not possible, we recommend changing your `$TMPDIR` to something project specific and manually purging it.
+c) Alternatively, you can completely disable the async disk cache via the environment variables `DISABLE_DISK_CACHE=true`
 
 ## License
 
