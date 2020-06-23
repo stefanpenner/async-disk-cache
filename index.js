@@ -227,7 +227,7 @@ async function writeP(filePath, content) {
     await writeFile(tmpfile, content)
   } catch(reason) {
     if (reason && reason.code === 'ENOENT') {
-      await mkdirp(base, { mode: '0775' });
+      await mkdirp(base, { mode: '0700' });
       await writeFile(tmpfile, content);
     } else {
       throw reason;
@@ -235,7 +235,7 @@ async function writeP(filePath, content) {
   }
 
   await renameFile(tmpfile, filePath);
-  await chmod(filePath,  parseInt('0666', 8));
+  await chmod(filePath,  '600');
 }
 
 /*
