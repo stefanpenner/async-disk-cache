@@ -11,6 +11,8 @@ const Mode = require('stat-mode');
 const crypto = require('crypto');
 const heimdall = require('heimdalljs');
 
+const MODE = process.platform === 'win32' ? '-rw-rw-rw-' : '-rw-------';
+
 describe('cache', function() {
   let cache;
   const key = 'path/to/file.js';
@@ -47,7 +49,7 @@ describe('cache', function() {
     // credit @jgable
     let mode = new Mode(fs.statSync(filePath));
 
-    expect(mode.toString()).to.equal('-rw-rw-rw-');
+    expect(mode.toString()).to.equal(MODE);
 
     expect(fs.readFileSync(filePath).toString()).equal(value);
   });
@@ -123,7 +125,7 @@ describe('cache compress: [ deflate ]', function() {
     let filePath = await cache.set(key, value);
     let mode = new Mode(fs.statSync(filePath));
 
-    expect(mode.toString()).to.equal('-rw-rw-rw-');
+    expect(mode.toString()).to.equal(MODE);
 
     let result = await inflate(fs.readFileSync(filePath));
     result = result.toString();
@@ -180,7 +182,7 @@ describe('cache compress: [ deflateRaw ]', function() {
     let filePath = await cache.set(key, value);
     let mode = new Mode(fs.statSync(filePath));
 
-    expect(mode.toString()).to.equal('-rw-rw-rw-');
+    expect(mode.toString()).to.equal(MODE);
 
     let result = await inflateRaw(fs.readFileSync(filePath));
     result = result.toString();
