@@ -23,13 +23,7 @@ if (!heimdall.hasMonitor('async-disk-cache')) {
   heimdall.registerMonitor('async-disk-cache', function AsyncDiskCacheSchema() {});
 }
 
-let username = "async-disk-cache-default-user";
-try {
-  username = require('username-sync')();
-} catch {
-  // allow loading if username-sync not available
-}
-const tmpdir = path.join(os.tmpdir(), username);
+const username = require('username-sync');
 
 /*
  * @private
@@ -140,6 +134,12 @@ const COMPRESSIONS = {
 class Cache {
   constructor(key, _) {
     const options = _ || {};
+    let tmpdir = path.join(os.tmpdir(), "async-disk-user");
+    try {
+      tmpdir = path.join(os.tmpdir(), username());
+    } catch (e) {
+      // use default tmpdir on username failure
+    }
     this.tmpdir = options.location|| tmpdir;
     this.compression = options.compression || false;
     this.supportBuffer = options.supportBuffer || false;
