@@ -23,7 +23,12 @@ if (!heimdall.hasMonitor('async-disk-cache')) {
   heimdall.registerMonitor('async-disk-cache', function AsyncDiskCacheSchema() {});
 }
 
-const username = require('username-sync')();
+let username = "async-disk-cache-default-user";
+try {
+  username = require('username-sync')();
+} catch {
+  // allow loading if username-sync not available
+}
 const tmpdir = path.join(os.tmpdir(), username);
 
 /*
