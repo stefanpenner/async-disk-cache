@@ -4,7 +4,7 @@ An async disk cache. inspired by [jgable/cache-swap](https://github.com/jgable/c
 
 A sync sibling version is also available: [stefanpenner/sync-disk-cache](https://github.com/stefanpenner/sync-disk-cache/)
 
-By default, this will usge `TMPDIR/<username>/` for storage, but this can be changed by setting the `$TMPDIR` environment variable.
+By default, this will use `TMPDIR/<username>/` for storage, but this can be changed by setting the `$TMPDIR` environment variable.
 
 ## Example
 
